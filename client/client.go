@@ -28,11 +28,11 @@ import (
 
 	"github.com/astaxie/beego/httplib"
 
-	"github.com/kubernetes-incubator/service-catalog/contrib/pkg/api"
+	"github.com/leonwanghui/opensds-broker/api"
 )
 
 const (
-	URL_PREFIX string = "http://172.20.10.5:50040"
+	URL_PREFIX string = "http://127.0.0.1:50040"
 )
 
 func ListProfiles() (*[]api.StorageProfile, error) {

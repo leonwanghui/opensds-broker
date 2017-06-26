@@ -1,0 +1,20 @@
+# Default values for opensds-broker.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+replicaCount: 1
+image:
+  repository: leonwanghui/opensds-broker
+  tag: latest
+  pullPolicy: Always
+service:
+  name: opensds-broker
+  type: ClusterIP
+  externalPort: 80
+  internalPort: 8005
+resources:
+  limits:
+    cpu: 100m
+    memory: 128Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi

@@ -4,5 +4,7 @@ metadata:
   name: opensds-instance
   namespace: opensds
 spec:
-  serviceClassName: opensds
+  serviceClassName: opensds-service
   planName: default
+  parameters:
+    capacity: 2
