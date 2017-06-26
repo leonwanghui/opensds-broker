@@ -1,0 +1,9 @@
+apiVersion: servicecatalog.k8s.io/v1alpha1
+kind: Binding
+metadata:
+  name: opensds-binding
+  namespace: opensds
+spec:
+  instanceRef:
+    name: opensds-instance
+  secretName: opensds-instance-secret
