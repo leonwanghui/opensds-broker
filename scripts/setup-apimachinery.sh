@@ -1,5 +1,6 @@
-#!/bin/bash
-# Copyright 2017 The Kubernetes Authors.
+#!/usr/bin/env bash
+
+# Copyright 2016 The Kubernetes Authors All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,16 +14,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Copies the current versions of apimachinery and client-go out of the
+# main kubernetes repo.  These repos are currently out of sync and not
+# versioned.
+set -euo pipefail
 
-set -o nounset
-set -o errexit
 
-KUBECTL=kubectl
-TYPES='servicebrokers serviceclasses serviceinstances servicebindings'
+rm -rf ./vendor/k8s.io/{kube-aggregator,apiserver,apimachinery,client-go}
 
-for i in $TYPES; do
-  for j in `$KUBECTL get --no-headers $i | cut -d ' ' -f 1`; do
-    echo "Deleting Type $i : $j"
-    $KUBECTL delete $i $j
-  done
-done
+cp -r ./vendor/k8s.io/kubernetes/staging/src/k8s.io/{kube-aggregator,apiserver,apimachinery,client-go} ./vendor/k8s.io

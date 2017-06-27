@@ -1,3 +1,4 @@
+apiVersion: v1
+description: A Helm chart for Kubernetes
 name: opensds-broker
-description: opensds service-broker deployment Helm chart.
-version: 0.0.1
+version: 0.1.0
