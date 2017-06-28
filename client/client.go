@@ -32,7 +32,7 @@ import (
 )
 
 const (
-	URL_PREFIX string = "http://127.0.0.1:50040"
+	URL_PREFIX string = "http://192.168.99.1:50040"
 )
 
 func ListProfiles() (*[]api.StorageProfile, error) {

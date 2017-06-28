@@ -78,6 +78,27 @@ func (c *openSDSController) Catalog() (*brokerapi.Catalog, error) {
 			},
 		},
 	}, nil
+/*
+        return &brokerapi.Catalog{
+                Services: []*brokerapi.Service{
+                        {
+                                Name:        "opensds-service",
+                                ID:          "4f6e6cf6-ffdd-425f-a2c7-3c9258ad2468",
+                                Description: "Policy based storage service",
+				Plans: []brokerapi.ServicePlan{
+					{
+						Name:        "default",
+						ID:          "4f6e6cf6-ffdd-425f-0000-3c9258ad2468",
+						Description: "",
+						Metadata:    map[string]string{},
+						Free:        true,
+					},
+				},
+                                Bindable:    true,
+                        },
+                },
+        }, nil
+*/
 }
 
 func (c *openSDSController) CreateServiceInstance(

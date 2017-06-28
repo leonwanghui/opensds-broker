@@ -5,12 +5,14 @@ replicaCount: 1
 image:
   repository: leonwanghui/opensds-broker
   tag: latest
-  pullPolicy: Always
+  pullPolicy: IfNotPresent
+restartPolicy: Never
 service:
   name: opensds-broker
   type: ClusterIP
   externalPort: 80
   internalPort: 8005
+  periodSeconds: 60
 resources:
   limits:
     cpu: 100m

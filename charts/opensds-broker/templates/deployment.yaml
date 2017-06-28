@@ -21,9 +21,11 @@ spec:
           httpGet:
             path: /v2/catalog
             port: {{ .Values.service.internalPort }}
+          periodSeconds: {{ .Values.service.periodSeconds }}
         readinessProbe:
           httpGet:
             path: /v2/catalog
             port: {{ .Values.service.internalPort }}
+          periodSeconds: {{ .Values.service.periodSeconds }}
         resources:
 {{ toYaml .Values.resources | indent 10 }}
