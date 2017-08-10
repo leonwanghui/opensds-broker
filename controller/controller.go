@@ -59,10 +59,10 @@ func (c *openSDSController) Catalog() (*brokerapi.Catalog, error) {
 	var plans = []brokerapi.ServicePlan{}
 	for _, prf := range *prfs {
 		plan := brokerapi.ServicePlan{
-			Name:        prf.Name,
-			ID:          prf.Id,
-			Description: prf.Description,
-			Metadata:    prf.StorageTags,
+			Name:        prf.GetName(),
+			ID:          prf.GetId(),
+			Description: prf.GetDescription(),
+			Metadata:    prf.Extra,
 			Free:        true,
 		}
 		plans = append(plans, plan)
@@ -110,16 +110,16 @@ func (c *openSDSController) CreateServiceInstance(
 	defer c.rwMutex.Unlock()
 	if ok {
 		capacity := capInterface.(float64)
-		vol, err := client.CreateVolume(id, int32(capacity))
+		vol, err := client.CreateVolume(id, int64(capacity))
 		if err != nil {
 			return &brokerapi.CreateServiceInstanceResponse{}, err
 		}
 		c.instanceMap[id] = &openSDSServiceInstance{
 			Name: id,
 			Credential: &brokerapi.Credential{
-				"volumeId": vol.Id,
+				"volumeId": vol.GetId(),
 				"pool":     "rbd",
-				"image":    "OPENSDS:" + vol.Name + ":" + vol.Id,
+				"image":    "OPENSDS:" + vol.GetName() + ":" + vol.GetId(),
 			},
 		}
 	} else {

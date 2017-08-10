@@ -32,11 +32,11 @@ import (
 )
 
 const (
-	URL_PREFIX string = "http://192.168.99.1:50040"
+	URL_PREFIX string = "http://100.64.128.40:50040"
 )
 
-func ListProfiles() (*[]api.StorageProfile, error) {
-	url := URL_PREFIX + "/api/v1/profiles"
+func ListProfiles() (*[]api.ProfileSpec, error) {
+	url := URL_PREFIX + "/api/v1alpha1/block/profiles"
 
 	// fmt.Println("Start GET request to list profiles, url =", url)
 	req := httplib.Get(url).SetTimeout(100*time.Second, 50*time.Second)
@@ -54,21 +54,17 @@ func ListProfiles() (*[]api.StorageProfile, error) {
 		return nil, err
 	}
 
-	var prfs = &[]api.StorageProfile{}
+	var prfs = &[]api.ProfileSpec{}
 	if err = json.Unmarshal(rbody, prfs); err != nil {
 		return nil, err
 	}
 	return prfs, nil
 }
 
-func CreateVolume(name string, size int32) (*api.VolumeResponse, error) {
-	url := URL_PREFIX + "/api/v1/volumes"
-	vr := &api.VolumeRequest{
-		Schema: &api.VolumeOperationSchema{
-			Name: name,
-			Size: size,
-		},
-	}
+func CreateVolume(name string, size int64) (*api.VolumeSpec, error) {
+	url := URL_PREFIX + "/api/v1alpha1/block/volumes"
+	vr := api.NewVolumeRequest()
+	vr.Spec.Name, vr.Spec.Size = name, size
 
 	// fmt.Println("Start POST request to create volume, url =", url)
 	req := httplib.Post(url).SetTimeout(100*time.Second, 50*time.Second)
@@ -87,44 +83,42 @@ func CreateVolume(name string, size int32) (*api.VolumeResponse, error) {
 		return nil, err
 	}
 
-	var vresp = &api.VolumeResponse{}
+	var vresp = &api.VolumeSpec{}
 	if err = json.Unmarshal(rbody, vresp); err != nil {
 		return nil, err
 	}
 	return vresp, nil
 }
 
-func ListVolumes() (*[]api.VolumeResponse, error) {
-	url := URL_PREFIX + "/api/v1/volumes"
+func ListVolumes() (*[]api.VolumeSpec, error) {
+	url := URL_PREFIX + "/api/v1alpha1/block/volumes"
 
 	// fmt.Println("Start GET request to list volumes, url =", url)
 	req := httplib.Get(url).SetTimeout(100*time.Second, 50*time.Second)
 
 	resp, err := req.Response()
 	if err != nil {
-		return &[]api.VolumeResponse{}, err
+		return &[]api.VolumeSpec{}, err
 	}
 	err = CheckHTTPResponseStatusCode(resp)
 	if err != nil {
-		return &[]api.VolumeResponse{}, err
+		return &[]api.VolumeSpec{}, err
 	}
 	rbody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return &[]api.VolumeResponse{}, err
+		return &[]api.VolumeSpec{}, err
 	}
 
-	var vols = &[]api.VolumeResponse{}
+	var vols = &[]api.VolumeSpec{}
 	if err = json.Unmarshal(rbody, vols); err != nil {
-		return &[]api.VolumeResponse{}, err
+		return &[]api.VolumeSpec{}, err
 	}
 	return vols, nil
 }
 
-func DeleteVolume(volID string) (*api.DefaultResponse, error) {
-	url := URL_PREFIX + "/api/v1/volumes/" + volID
-	vr := &api.VolumeRequest{
-		Schema: &api.VolumeOperationSchema{},
-	}
+func DeleteVolume(volID string) (*api.Response, error) {
+	url := URL_PREFIX + "/api/v1alpha1/block/volumes/" + volID
+	vr := api.NewVolumeRequest()
 
 	// fmt.Println("Start DELETE request to delete volume, url =", url)
 	req := httplib.Delete(url).SetTimeout(100*time.Second, 50*time.Second)
@@ -143,7 +137,7 @@ func DeleteVolume(volID string) (*api.DefaultResponse, error) {
 		return nil, err
 	}
 
-	var vresp = &api.DefaultResponse{}
+	var vresp = &api.Response{}
 	err = json.Unmarshal(rbody, vresp)
 	if err != nil {
 		return nil, err

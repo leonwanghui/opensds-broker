@@ -12,7 +12,7 @@ service:
   type: ClusterIP
   externalPort: 80
   internalPort: 8005
-  periodSeconds: 60
+  periodSeconds: 120
 resources:
   limits:
     cpu: 100m
