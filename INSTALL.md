@@ -74,12 +74,31 @@ chmod 700 get_helm.sh
 kubectl.sh get po -n kube-system (check if the till-deploy pod is running)
 ```
 
-### Download service catalog and install the code through helm
+### Service Catalog download and install
 ```
 mkdir -p gopath/src/github.com/kubernetes-incubator
-cd gopath/src/github.com/kubernetes-incubator
 wget https://github.com/kubernetes-incubator/service-catalog/archive/v0.0.13.tar.gz
-helm install charts/catalog --name catalog --namespace catalog
+tar xvf service-catalog-0.0.13.tar.gz -C gopath/src/github.com/kubernetes-incubator
+helm install gopath/src/github.com/kubernetes-incubator/service-catalog-0.0.13/charts/catalog --name catalog --namespace catalog
 
-kubectl get po -n catalog (check if the catalog api-server and controller-manager pod are running)
+kubectl.sh get po -n catalog (check if the catalog api-server and controller-manager pod are running)
+```
+
+## OpenSDS Service Broker Setup
+
+### OpenSDS cluster install
+To ensure service broker connecting to OpenSDS api-service, you probably need to configure your service ip:
+```
+docker run -it --net=host -v /var/log/opensds:/var/log/opensds leonwanghui/opensds-controller:v1alpha1 /usr/bin/osdslet --api-endpoint=your_host_ip:50040
+docker run -d --net=host -v /var/log/opensds:/var/log/opensds -v /etc/opensds:/etc/opensds -v /etc/ceph:/etc/ceph leonwanghui/opensds-dock:v1alpha1
+```
+
+### OpenSDS service broker install
+```
+mkdir -p gopath/src/github.com/leonwanghui
+git clone https://github.com/leonwanghui/opensds-broker.git gopath/src/github.com/leonwanghui
+cd gopath/src/github.com/leonwanghui/opensds-broker
+helm install charts/opensds-broker --name opensds-broker --namespace opensds-broker
+
+kubectl get po -n opensds-broker (check if opensds broker pod is running)
 ```
