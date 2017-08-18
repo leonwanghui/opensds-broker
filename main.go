@@ -8,6 +8,7 @@ import (
 
 	"github.com/kubernetes-incubator/service-catalog/contrib/pkg/broker/server"
 	"github.com/kubernetes-incubator/service-catalog/pkg"
+	"github.com/leonwanghui/opensds-broker/client"
 	"github.com/leonwanghui/opensds-broker/controller"
 )
 
@@ -17,6 +18,7 @@ var options struct {
 
 func init() {
 	flag.IntVar(&options.Port, "port", 8005, "use '--port' option to specify the port for broker to listen on")
+	flag.StringVar(&client.Edp, "endpoint", "http://127.0.0.1:50040", "use '--endpoint' option to specify the client endpoint for broker to connect the backend")
 	flag.Parse()
 }
 

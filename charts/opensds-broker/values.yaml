@@ -7,12 +7,16 @@ image:
   tag: latest
   pullPolicy: IfNotPresent
 restartPolicy: Never
+container:
+  command: "/opensds-broker"
+  argLog: "-logtostderr"
+  argEndpoint: "--endpoint=http://100.64.128.40:50040"
 service:
   name: opensds-broker
   type: ClusterIP
   externalPort: 80
   internalPort: 8005
-  periodSeconds: 120
+  periodSeconds: 60
 resources:
   limits:
     cpu: 100m

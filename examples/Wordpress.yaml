@@ -14,7 +14,7 @@ spec:
         imagePullPolicy: IfNotPresent
         ports:
         - name: wordpress
-          containerPort: 8081
+          containerPort: 8084
         volumeMounts:
         - mountPath: /mnt/rbd
           name: myvol
@@ -24,7 +24,7 @@ spec:
           monitors:
           - 100.64.128.40:6789
           pool: rbd
-          image: OPENSDS:03df331d-fa60-4835-a40f-cb31dd9bdcd6:6d2fb93e-dcb8-43b5-99ed-943c99cf5364
+          image: OPENSDS:aaad3621-8455-4506-b20e-d67557485278:54140200-81bd-4c17-825e-4714949f55c1
           user: admin
           keyring: /etc/ceph/ceph.client.admin.keyring
           fsType: ext4
@@ -38,8 +38,8 @@ spec:
   type: ClusterIP
   ports:
   - name: wordpress
-    port: 8081
-    targetPort: 8081
+    port: 8084
+    targetPort: 8084
     protocol: TCP
   selector:
     app: wordpress

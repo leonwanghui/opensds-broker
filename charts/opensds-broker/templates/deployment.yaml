@@ -14,6 +14,10 @@ spec:
       containers:
       - name: {{ .Chart.Name }}
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        command:
+        - {{ .Values.container.command }}
+        - {{ .Values.container.argLog }}
+        - {{ .Values.container.argEndpoint }}
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         ports:
         - containerPort: {{ .Values.service.internalPort }}

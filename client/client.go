@@ -31,12 +31,10 @@ import (
 	"github.com/leonwanghui/opensds-broker/api"
 )
 
-const (
-	URL_PREFIX string = "http://100.64.128.40:50040"
-)
+var Edp string
 
 func ListProfiles() (*[]api.ProfileSpec, error) {
-	url := URL_PREFIX + "/api/v1alpha1/block/profiles"
+	url := Edp + "/api/v1alpha1/block/profiles"
 
 	// fmt.Println("Start GET request to list profiles, url =", url)
 	req := httplib.Get(url).SetTimeout(100*time.Second, 50*time.Second)
@@ -62,7 +60,7 @@ func ListProfiles() (*[]api.ProfileSpec, error) {
 }
 
 func CreateVolume(name string, size int64) (*api.VolumeSpec, error) {
-	url := URL_PREFIX + "/api/v1alpha1/block/volumes"
+	url := Edp + "/api/v1alpha1/block/volumes"
 	vr := api.NewVolumeRequest()
 	vr.Spec.Name, vr.Spec.Size = name, size
 
@@ -91,7 +89,7 @@ func CreateVolume(name string, size int64) (*api.VolumeSpec, error) {
 }
 
 func ListVolumes() (*[]api.VolumeSpec, error) {
-	url := URL_PREFIX + "/api/v1alpha1/block/volumes"
+	url := Edp + "/api/v1alpha1/block/volumes"
 
 	// fmt.Println("Start GET request to list volumes, url =", url)
 	req := httplib.Get(url).SetTimeout(100*time.Second, 50*time.Second)
@@ -117,7 +115,7 @@ func ListVolumes() (*[]api.VolumeSpec, error) {
 }
 
 func DeleteVolume(volID string) (*api.Response, error) {
-	url := URL_PREFIX + "/api/v1alpha1/block/volumes/" + volID
+	url := Edp + "/api/v1alpha1/block/volumes/" + volID
 	vr := api.NewVolumeRequest()
 
 	// fmt.Println("Start DELETE request to delete volume, url =", url)
