@@ -79,6 +79,15 @@ chmod 700 get_helm.sh
 kubectl.sh get po -n kube-system (check if the till-deploy pod is running)
 ```
 
+### Set up kube-dns service (optional)
+To avoid network barrieres, please make sure kube-dns service be set up:
+```
+mkdir -p gopath/src/github.com/leonwanghui
+git clone https://github.com/leonwanghui/opensds-broker.git gopath/src/github.com/leonwanghui
+
+kubectl.sh create -f gopath/src/github.com/leonwanghui/opensds-broker/examples/kube-dns.yaml
+```
+
 ### Service Catalog download and install
 ```
 mkdir -p gopath/src/github.com/kubernetes-incubator
@@ -138,13 +147,16 @@ To ensure service broker connecting to OpenSDS api-service, you probably need to
 docker run -d --net=host -v /var/log/opensds:/var/log/opensds -v /etc/opensds:/etc/opensds -v /etc/ceph:/etc/ceph leonwanghui/opensds-dock:v1alpha1
 docker run -it --net=host -v /var/log/opensds:/var/log/opensds leonwanghui/opensds-controller:v1alpha1 /usr/bin/osdslet --api-endpoint=your_host_ip:50040
 
-cur -X POST "http://your_host_ip:50040/api/v1alpha1/block/profiles" -H "Content-Type: application/json" -d '{"spec": {"name": "default", "description": "default policy plan"}}'
+curl -X POST "http://your_host_ip:50040/api/v1alpha1/block/profiles" -H "Content-Type: application/json" -d '{"spec": {"name": "default", "description": "default policy plan"}}'
 ```
 
 ### OpenSDS service broker install
+Firstly, you need to modify the value of ```argEndpoint``` field in ```values.yaml```, just change it to ```your_host_ip:50040```:
 ```
-mkdir -p gopath/src/github.com/leonwanghui
-git clone https://github.com/leonwanghui/opensds-broker.git gopath/src/github.com/leonwanghui
+vim gopath/src/github.com/leonwanghui/opensds-broker/charts/opensds-broker/values.yaml (modify this file)
+```
+Then you can install service broker via helm:
+```
 cd gopath/src/github.com/leonwanghui/opensds-broker
 helm install charts/opensds-broker --name opensds-broker --namespace opensds-broker
 
