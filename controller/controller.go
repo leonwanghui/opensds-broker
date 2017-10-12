@@ -14,13 +14,12 @@ limitations under the License.
 package controller
 
 import (
-	"encoding/json"
 	"fmt"
+	"log"
 	"sync"
 
-	"github.com/golang/glog"
 	"github.com/kubernetes-incubator/service-catalog/contrib/pkg/broker/controller"
-	"github.com/kubernetes-incubator/service-catalog/pkg/brokerapi"
+	"github.com/kubernetes-incubator/service-catalog/contrib/pkg/brokerapi"
 	"github.com/leonwanghui/opensds-broker/client"
 )
 
@@ -53,11 +52,11 @@ func CreateController() controller.Controller {
 func (c *openSDSController) Catalog() (*brokerapi.Catalog, error) {
 	prfs, err := client.ListProfiles()
 	if err != nil {
-		return &brokerapi.Catalog{}, err
+		return nil, err
 	}
 
 	var plans = []brokerapi.ServicePlan{}
-	for _, prf := range *prfs {
+	for _, prf := range prfs {
 		plan := brokerapi.ServicePlan{
 			Name:        prf.GetName(),
 			ID:          prf.GetId(),
@@ -67,6 +66,7 @@ func (c *openSDSController) Catalog() (*brokerapi.Catalog, error) {
 		}
 		plans = append(plans, plan)
 	}
+
 	return &brokerapi.Catalog{
 		Services: []*brokerapi.Service{
 			{
@@ -78,58 +78,51 @@ func (c *openSDSController) Catalog() (*brokerapi.Catalog, error) {
 			},
 		},
 	}, nil
-	/*
-	           return &brokerapi.Catalog{
-	                   Services: []*brokerapi.Service{
-	                           {
-	                                   Name:        "opensds-service",
-	                                   ID:          "4f6e6cf6-ffdd-425f-a2c7-3c9258ad2468",
-	                                   Description: "Policy based storage service",
-	   				Plans: []brokerapi.ServicePlan{
-	   					{
-	   						Name:        "default",
-	   						ID:          "4f6e6cf6-ffdd-425f-0000-3c9258ad2468",
-	   						Description: "",
-	   						Metadata:    map[string]string{},
-	   						Free:        true,
-	   					},
-	   				},
-	                                   Bindable:    true,
-	                           },
-	                   },
-	           }, nil
-	*/
+}
+
+func (c *openSDSController) GetServiceInstanceLastOperation(
+	instanceID, serviceID, planID, operation string,
+) (*brokerapi.LastOperationResponse, error) {
+	return nil, nil
 }
 
 func (c *openSDSController) CreateServiceInstance(
-	id string,
+	instanceID string,
 	req *brokerapi.CreateServiceInstanceRequest,
 ) (*brokerapi.CreateServiceInstanceResponse, error) {
-	capInterface, ok := req.Parameters["capacity"]
 	c.rwMutex.Lock()
 	defer c.rwMutex.Unlock()
-	if ok {
-		capacity := capInterface.(float64)
-		vol, err := client.CreateVolume(id, int64(capacity))
-		if err != nil {
-			return &brokerapi.CreateServiceInstanceResponse{}, err
-		}
-		c.instanceMap[id] = &openSDSServiceInstance{
-			Name: id,
-			Credential: &brokerapi.Credential{
-				"volumeId": vol.GetId(),
-				"pool":     "rbd",
-				"image":    "OPENSDS:" + vol.GetName() + ":" + vol.GetId(),
-			},
-		}
-	} else {
-		return &brokerapi.CreateServiceInstanceResponse{}, fmt.Errorf("Capacity not provided in request!")
+
+	var name, description string
+	var capacity int64
+	if nameInterface, ok := req.Parameters["name"]; ok {
+		name = nameInterface.(string)
+	}
+	if despInterface, ok := req.Parameters["description"]; ok {
+		description = despInterface.(string)
+	}
+	if capInterface, ok := req.Parameters["capacity"]; ok {
+		capacity = capInterface.(int64)
 	}
 
-	glog.Infof("Created User Provided Service Instance:\n%v\n", c.instanceMap[id])
+	vol, err := client.CreateVolume(req.PlanID, name, description, capacity)
+	if err != nil {
+		return nil, err
+	}
+	c.instanceMap[instanceID] = &openSDSServiceInstance{
+		Name: instanceID,
+		Credential: &brokerapi.Credential{
+			"volumeId": vol.GetId(),
+			"pool":     "rbd",
+			"image":    "OPENSDS:" + vol.GetName() + ":" + vol.GetId(),
+		},
+	}
+
+	log.Printf("Created User Provided Service Instance:\n%v\n", c.instanceMap[instanceID])
 	return &brokerapi.CreateServiceInstanceResponse{}, nil
 }
 
+/*
 func (c *openSDSController) GetServiceInstance(id string) (string, error) {
 	c.rwMutex.Lock()
 	defer c.rwMutex.Unlock()
@@ -145,12 +138,13 @@ func (c *openSDSController) GetServiceInstance(id string) (string, error) {
 
 	return "", fmt.Errorf("Can not find instance id %v", id)
 }
+*/
 
-func (c *openSDSController) RemoveServiceInstance(id string) (*brokerapi.DeleteServiceInstanceResponse, error) {
+func (c *openSDSController) RemoveServiceInstance(instanceID, serviceID, planID string, acceptsIncomplete bool) (*brokerapi.DeleteServiceInstanceResponse, error) {
 	c.rwMutex.Lock()
 	defer c.rwMutex.Unlock()
 
-	instance, ok := c.instanceMap[id]
+	instance, ok := c.instanceMap[instanceID]
 	if ok {
 		volInterface, ok := (*instance.Credential)["volumeId"]
 		if !ok {
@@ -159,12 +153,11 @@ func (c *openSDSController) RemoveServiceInstance(id string) (*brokerapi.DeleteS
 		volID := volInterface.(string)
 		resp, err := client.DeleteVolume(volID)
 		if err != nil {
-			return &brokerapi.DeleteServiceInstanceResponse{}, err
+			return nil, err
 		} else if resp.Status != "Success" {
-			return &brokerapi.DeleteServiceInstanceResponse{}, fmt.Errorf(resp.Error)
+			return nil, fmt.Errorf(resp.Error)
 		}
-		delete(c.instanceMap, id)
-		return &brokerapi.DeleteServiceInstanceResponse{}, nil
+		delete(c.instanceMap, instanceID)
 	}
 
 	return &brokerapi.DeleteServiceInstanceResponse{}, nil
@@ -185,7 +178,7 @@ func (c *openSDSController) Bind(
 	return &brokerapi.CreateServiceBindingResponse{Credentials: *cred}, nil
 }
 
-func (c *openSDSController) UnBind(instanceID string, bindingID string) error {
+func (c *openSDSController) UnBind(instanceID, bindingID, serviceID, planID string) error {
 	// Since we don't persist the binding, there's nothing to do here.
 	return nil
 }

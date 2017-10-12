@@ -91,9 +91,9 @@ kubectl.sh create -f gopath/src/github.com/leonwanghui/opensds-broker/examples/k
 ### Service Catalog download and install
 ```
 mkdir -p gopath/src/github.com/kubernetes-incubator
-wget https://github.com/kubernetes-incubator/service-catalog/archive/v0.0.13.tar.gz
-tar xvf service-catalog-0.0.13.tar.gz -C gopath/src/github.com/kubernetes-incubator
-helm install gopath/src/github.com/kubernetes-incubator/service-catalog-0.0.13/charts/catalog --name catalog --namespace catalog
+wget https://github.com/kubernetes-incubator/service-catalog/archive/v0.1.0-rc1.tar.gz
+tar xvf service-catalog-0.1.0-rc1.tar.gz -C gopath/src/github.com/kubernetes-incubator
+helm install gopath/src/github.com/kubernetes-incubator/service-catalog-0.1.0-rc1/charts/catalog --name catalog --namespace catalog
 
 kubectl.sh get po -n catalog (check if the catalog api-server and controller-manager pod are running)
 ```
@@ -101,53 +101,75 @@ kubectl.sh get po -n catalog (check if the catalog api-server and controller-man
 ## OpenSDS Service Broker Setup
 
 ### OpenSDS cluster install
-Before the system starts, you should configure the pool and backend information. Here are some examples for testing:
-- Pool info (stored in ```pool.json```):
-```json
-[
-	{
-		"id": "80287bf8-66de-11e7-b031-f3b0af1675ba",
-		"name": "rbd-pool",
-		"description": "ceph pool1",
-		"storageType": "block",
-		"dockId": "076454a8-65da-11e7-9a65-5f5d9b935b9f",
-		"totalCapacity": 200,
-		"freeCapacity": 200,
-		"parameters": {
-			"thinProvision": "false",
-			"highAvailability": "true"
-		}
-	}
-]
+1. Before the system starts, you should configure the pool and backend information. Here are some examples for testing:
+- OpenSDS global configuration info (stored in ```opensds.conf```):
+```conf
+[osdslet]
+api_endpoint = localhost:50040
+graceful = True
+log_file = /var/log/opensds/osdslet.log
+socket_order = inc
+
+[osdsdock]
+api_endpoint = localhost:50050
+log_file = /var/log/opensds/osdsdock.log
+
+# Enabled backend types, such as sample, ceph, cinder, etc.
+enabled_backends = ceph
+
+# If backend needs config file, specify the path here.
+ceph_config = /etc/opensds/driver/ceph.yaml
+
+[sample]
+name = sample
+description = Sample backend for testing
+driver_name = default
+
+[ceph]
+name = ceph
+description = Ceph Test
+driver_name = ceph
+
+[database]
+credential = opensds:password@127.0.0.1:3306/dbname
+endpoint = localhost:2379,localhost:2380
+driver = etcd
 ```
-- Backend info (stored in ```dock.json```):
-```json
-[
-	{
-		"id": "076454a8-65da-11e7-9a65-5f5d9b935b9f",
-		"name": "ceph",
-		"description": "ceph backend service",
-		"endpoint": "127.0.0.1",
-		"driverName": "ceph",
-		"parameters": {
-			"thinProvision": "false",
-			"highAvailability": "true"
-		}
-	}
+- Ceph configuration info (stored in ```ceph.yaml```):
+```yaml
+configFile: /etc/ceph/ceph.conf
+pool:
+  "rbd":
+    diskType: SSD
+    iops: 1000
+    bandwidth: 1000
+  "pool01":
+    diskType: SAS
+    iops: 800
+    bandwidth: 800
 ```
 Now put them in the right place:
 ```
-mkdir -p /etc/opensds && mkdir -p /var/log/opensds
-mv pool.json /etc/opensds/
-mv dock.json /etc/opensds/
+mkdir -p /etc/opensds/driver && mkdir -p /var/log/opensds
+mv opensds.conf /etc/opensds/
+mv ceph.yaml /etc/opensds/driver/
+```
+
+2. Download and start opa scheduler service daemon:
+```
+go get github.com/open-policy-agent/opa
+go install gopath/src/github.com/open-policy-agent/opa
+
+opa run -s gopath/src/github.com/opensds/opensds/examples/policy/policy.rego
 ```
 
 To ensure service broker connecting to OpenSDS api-service, you probably need to configure your service ip:
 ```
-docker run -d --net=host -v /var/log/opensds:/var/log/opensds -v /etc/opensds:/etc/opensds -v /etc/ceph:/etc/ceph leonwanghui/opensds-dock:v1alpha1
-docker run -it --net=host -v /var/log/opensds:/var/log/opensds leonwanghui/opensds-controller:v1alpha1 /usr/bin/osdslet --api-endpoint=your_host_ip:50040
+docker run -d --net=host -v /var/log/opensds:/var/log/opensds -v /etc/opensds:/etc/opensds -v /etc/ceph:/etc/ceph leonwanghui/opensds-dock:v1alpha
+docker run -it --net=host -v /var/log/opensds:/var/log/opensds leonwanghui/opensds-controller:v1alpha /usr/bin/osdslet --api-endpoint=your_host_ip:50040
 
-curl -X POST "http://your_host_ip:50040/api/v1alpha1/block/profiles" -H "Content-Type: application/json" -d '{"spec": {"name": "default", "description": "default policy plan"}}'
+curl -X POST "http://your_host_ip:50040/api/v1alpha/profiles" -H "Content-Type: application/json" -d '{"name": "default", "description": "default policy", "extra": {"capacity": 5}}'
+curl -X POST "http://your_host_ip:50040/api/v1alpha/profiles" -H "Content-Type: application/json" -d '{"name": "silver", "description": "silver policy", "extra": {"iops": 300, "bandwidth": 500, "diskType":"SAS", "capacity": 5}}'
 ```
 
 ### OpenSDS service broker install

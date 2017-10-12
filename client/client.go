@@ -20,29 +20,30 @@ storage plugins.
 package client
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"io/ioutil"
+	"log"
 	"net/http"
-	"time"
 
-	"github.com/astaxie/beego/httplib"
-
-	"github.com/leonwanghui/opensds-broker/api"
+	"github.com/leonwanghui/opensds-broker/model"
 )
 
 var Edp string
+var httpClient = &http.Client{}
 
-func ListProfiles() (*[]api.ProfileSpec, error) {
-	url := Edp + "/api/v1alpha1/block/profiles"
+func ListProfiles() ([]*model.ProfileSpec, error) {
+	url := Edp + "/api/v1alpha/profiles"
 
-	// fmt.Println("Start GET request to list profiles, url =", url)
-	req := httplib.Get(url).SetTimeout(100*time.Second, 50*time.Second)
-
-	resp, err := req.Response()
+	req, err := http.NewRequest("GET", url, nil)
+	resp, err := httpClient.Do(req)
 	if err != nil {
+		log.Fatal(err)
 		return nil, err
 	}
+	defer resp.Body.Close()
+
 	err = CheckHTTPResponseStatusCode(resp)
 	if err != nil {
 		return nil, err
@@ -52,26 +53,34 @@ func ListProfiles() (*[]api.ProfileSpec, error) {
 		return nil, err
 	}
 
-	var prfs = &[]api.ProfileSpec{}
-	if err = json.Unmarshal(rbody, prfs); err != nil {
+	var prfs = []*model.ProfileSpec{}
+	if err = json.Unmarshal(rbody, &prfs); err != nil {
 		return nil, err
 	}
 	return prfs, nil
 }
 
-func CreateVolume(name string, size int64) (*api.VolumeSpec, error) {
-	url := Edp + "/api/v1alpha1/block/volumes"
-	vr := api.NewVolumeRequest()
-	vr.Spec.Name, vr.Spec.Size = name, size
+func CreateVolume(planID, name, description string, size int64) (*model.VolumeSpec, error) {
+	url := Edp + "/api/v1alpha/block/volumes"
+	vr := &model.VolumeSpec{
+		BaseModel:   &model.BaseModel{},
+		Name:        name,
+		Description: description,
+		Size:        size,
+		ProfileId:   planID,
+	}
 
-	// fmt.Println("Start POST request to create volume, url =", url)
-	req := httplib.Post(url).SetTimeout(100*time.Second, 50*time.Second)
-	req.JSONBody(vr)
-
-	resp, err := req.Response()
+	vrJSON, err := json.Marshal(vr)
 	if err != nil {
 		return nil, err
 	}
+	req, err := http.NewRequest("POST", url, bytes.NewReader(vrJSON))
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
 	err = CheckHTTPResponseStatusCode(resp)
 	if err != nil {
 		return nil, err
@@ -81,51 +90,55 @@ func CreateVolume(name string, size int64) (*api.VolumeSpec, error) {
 		return nil, err
 	}
 
-	var vresp = &api.VolumeSpec{}
+	var vresp = &model.VolumeSpec{}
 	if err = json.Unmarshal(rbody, vresp); err != nil {
 		return nil, err
 	}
 	return vresp, nil
 }
 
-func ListVolumes() (*[]api.VolumeSpec, error) {
-	url := Edp + "/api/v1alpha1/block/volumes"
+func ListVolumes() ([]*model.VolumeSpec, error) {
+	url := Edp + "/api/v1alpha/block/volumes"
 
-	// fmt.Println("Start GET request to list volumes, url =", url)
-	req := httplib.Get(url).SetTimeout(100*time.Second, 50*time.Second)
-
-	resp, err := req.Response()
+	req, err := http.NewRequest("GET", url, nil)
+	resp, err := httpClient.Do(req)
 	if err != nil {
-		return &[]api.VolumeSpec{}, err
+		log.Fatal(err)
+		return nil, err
 	}
+	defer resp.Body.Close()
+
 	err = CheckHTTPResponseStatusCode(resp)
 	if err != nil {
-		return &[]api.VolumeSpec{}, err
+		return nil, err
 	}
 	rbody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return &[]api.VolumeSpec{}, err
+		return nil, err
 	}
 
-	var vols = &[]api.VolumeSpec{}
-	if err = json.Unmarshal(rbody, vols); err != nil {
-		return &[]api.VolumeSpec{}, err
+	var vols = []*model.VolumeSpec{}
+	if err = json.Unmarshal(rbody, &vols); err != nil {
+		return nil, err
 	}
 	return vols, nil
 }
 
-func DeleteVolume(volID string) (*api.Response, error) {
-	url := Edp + "/api/v1alpha1/block/volumes/" + volID
-	vr := api.NewVolumeRequest()
+func DeleteVolume(volID string) (*model.Response, error) {
+	url := Edp + "/api/v1alpha/block/volumes/" + volID
+	vr := &model.VolumeSpec{}
 
-	// fmt.Println("Start DELETE request to delete volume, url =", url)
-	req := httplib.Delete(url).SetTimeout(100*time.Second, 50*time.Second)
-	req.JSONBody(vr)
-
-	resp, err := req.Response()
+	vrJSON, err := json.Marshal(vr)
 	if err != nil {
 		return nil, err
 	}
+	req, err := http.NewRequest("DELETE", url, bytes.NewReader(vrJSON))
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
 	err = CheckHTTPResponseStatusCode(resp)
 	if err != nil {
 		return nil, err
@@ -135,7 +148,7 @@ func DeleteVolume(volID string) (*api.Response, error) {
 		return nil, err
 	}
 
-	var vresp = &api.Response{}
+	var vresp = &model.Response{}
 	err = json.Unmarshal(rbody, vresp)
 	if err != nil {
 		return nil, err

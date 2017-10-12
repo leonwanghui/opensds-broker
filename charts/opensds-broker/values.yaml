@@ -4,13 +4,13 @@
 replicaCount: 1
 image:
   repository: leonwanghui/opensds-broker
-  tag: latest
+  tag: v1alpha
   pullPolicy: IfNotPresent
 restartPolicy: Never
 container:
   command: "/opensds-broker"
   argLog: "-logtostderr"
-  argEndpoint: "--endpoint=http://192.168.1.7:50040"
+  argEndpoint: "--endpoint=http://100.64.128.40:50040"
 service:
   name: opensds-broker
   type: ClusterIP

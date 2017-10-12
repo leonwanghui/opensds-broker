@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"os"
@@ -13,11 +14,11 @@ import (
 )
 
 var options struct {
-	Port int
+	Port string
 }
 
 func init() {
-	flag.IntVar(&options.Port, "port", 8005, "use '--port' option to specify the port for broker to listen on")
+	flag.StringVar(&options.Port, "port", ":8005", "use '--port' option to specify the port for broker to listen on")
 	flag.StringVar(&client.Edp, "endpoint", "http://127.0.0.1:50040", "use '--endpoint' option to specify the client endpoint for broker to connect the backend")
 	flag.Parse()
 }
@@ -28,5 +29,5 @@ func main() {
 		return
 	}
 
-	server.Start(options.Port, controller.CreateController())
+	server.Run(context.Background(), options.Port, controller.CreateController())
 }
