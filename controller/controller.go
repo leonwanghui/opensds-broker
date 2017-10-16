@@ -102,7 +102,7 @@ func (c *openSDSController) CreateServiceInstance(
 		description = despInterface.(string)
 	}
 	if capInterface, ok := req.Parameters["capacity"]; ok {
-		capacity = capInterface.(int64)
+		capacity = int64(capInterface.(float64))
 	}
 
 	vol, err := client.CreateVolume(req.PlanID, name, description, capacity)
