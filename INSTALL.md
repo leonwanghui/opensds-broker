@@ -239,7 +239,7 @@ kubectl.sh get po -n opensds
 kubectl.sh get service -n opensds
 ```
 
-After all things done, you can visit your own blog by searching: ```http://service_cluster_ip:8004```!
+After all things done, you can visit your own blog by searching: ```http://service_cluster_ip:8084```!
 
 ## Clean it up
 
