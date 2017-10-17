@@ -75,9 +75,15 @@ kubectl.sh get po
 curl https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get > get_helm.sh
 chmod 700 get_helm.sh
 ./get_helm.sh
-
+helm init
 kubectl.sh get po -n kube-system (check if the till-deploy pod is running)
 ```
+
+If your kubernetes cluster has RBAC enabled, you must ensure that the tiller pod has cluster-admin access. By default, helm init installs the tiller pod into kube-system namespace, with tiller configured to use the default service account.
+```
+kubectl create clusterrolebinding tiller-cluster-admin --clusterrole=cluster-admin --serviceaccount=kube-system:default
+```
+cluster-admin access is required in order for helm to work correctly in clusters with RBAC enabled. If you used the --tiller-namespace or --service-account flags when running helm init, the --serviceaccount flag in the previous command needs to be adjusted to reference the appropriate namespace and ServiceAccount name.
 
 ### Set up kube-dns service (optional)
 To avoid network barrieres, please make sure kube-dns service be set up:
