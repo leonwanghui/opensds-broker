@@ -193,7 +193,7 @@ kubectl.sh get po -n opensds-broker (check if opensds broker pod is running)
 
 ### Configure Kubectl context
 ```
-kubectl.sh config set-cluster service-catalog --server=http://127.0.0.1:30080
+kubectl.sh config set-cluster service-catalog --server=https://127.0.0.1:30443 --insecure-skip-tls-verify=true
 kubectl.sh config set-context service-catalog --cluster=service-catalog
 
 kubectl.sh --context=service-catalog get clusterservicebrokers,serviceinstances,servicebindings
