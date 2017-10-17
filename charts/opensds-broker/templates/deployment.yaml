@@ -1,35 +1,58 @@
-apiVersion: extensions/v1beta1
 kind: Deployment
+apiVersion: extensions/v1beta1
 metadata:
   name: {{ template "fullname" . }}
   labels:
-    chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
+    app: {{ template "fullname" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
 spec:
-  replicas: {{ .Values.replicaCount }}
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ template "fullname" . }}
   template:
     metadata:
       labels:
         app: {{ template "fullname" . }}
+        chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+        release: "{{ .Release.Name }}"
+        heritage: "{{ .Release.Service }}"
     spec:
       containers:
-      - name: {{ .Chart.Name }}
-        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+      - name: opensds-broker
+        image: {{ .Values.image }}
         command:
-        - {{ .Values.container.command }}
-        - {{ .Values.container.argLog }}
-        - {{ .Values.container.argEndpoint }}
-        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        - "/opensds-broker"
+        - "--endpoint=http://45.77.70.233:50040"
+        imagePullPolicy: {{ .Values.imagePullPolicy }}
+        args:
+        - --port
+        - "8080"
+        {{- if .Values.tls.cert}}
+        - --tlsCert
+        - "{{ .Values.tls.cert }}"
+        {{- end}}
+        {{- if .Values.tls.key}}
+        - --tlsKey
+        - "{{ .Values.tls.key }}"
+        {{- end}}
         ports:
-        - containerPort: {{ .Values.service.internalPort }}
-        livenessProbe:
-          httpGet:
-            path: /v2/catalog
-            port: {{ .Values.service.internalPort }}
-          periodSeconds: {{ .Values.service.periodSeconds }}
+        - containerPort: 8080
         readinessProbe:
-          httpGet:
-            path: /v2/catalog
-            port: {{ .Values.service.internalPort }}
-          periodSeconds: {{ .Values.service.periodSeconds }}
-        resources:
-{{ toYaml .Values.resources | indent 10 }}
+          tcpSocket:
+            port: 8080
+          failureThreshold: 1
+          initialDelaySeconds: 10
+          periodSeconds: 60
+          successThreshold: 1
+          timeoutSeconds: 2
+        livenessProbe:
+          tcpSocket:
+            port: 8080
+          failureThreshold: 3
+          initialDelaySeconds: 10
+          periodSeconds: 60
+          successThreshold: 1
+          timeoutSeconds: 2

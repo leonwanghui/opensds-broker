@@ -1,26 +1,11 @@
-# Default values for opensds-broker.
-# This is a YAML-formatted file.
-# Declare variables to be passed into your templates.
-replicaCount: 1
-image:
-  repository: opensds/opensds-broker
-  tag: policy-scheduler
-  pullPolicy: IfNotPresent
-restartPolicy: Never
-container:
-  command: "/opensds-broker"
-  argLog: "-logtostderr"
-  argEndpoint: "--endpoint=http://100.64.128.40:50040"
-service:
-  name: opensds-broker
-  type: ClusterIP
-  externalPort: 80
-  internalPort: 8005
-  periodSeconds: 60
-resources:
-  limits:
-    cpu: 100m
-    memory: 128Mi
-  requests:
-    cpu: 100m
-    memory: 128Mi
+# Default values for User-Provided Service Broker
+# Image to use
+image: leonwanghui/opensds-broker:opa-scheduler
+# ImagePullPolicy; valid values are "IfNotPresent", "Never", and "Always"
+imagePullPolicy: Always
+# Certificate details to use for TLS. Leave blank to not use TLS
+tls:
+  # base-64 encoded PEM data for the TLS certificate
+  cert:
+  # base-64 encoded PEM data for the private key matching the certificate
+  key:
