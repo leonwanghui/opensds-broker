@@ -149,7 +149,7 @@ pool:
     diskType: SSD
     iops: 1000
     bandwidth: 1000
-  "pool01":
+  "test":
     diskType: SAS
     iops: 800
     bandwidth: 800
@@ -171,8 +171,8 @@ opa run -s gopath/src/github.com/opensds/opensds/examples/policy/policy.rego
 
 To ensure service broker connecting to OpenSDS api-service, you probably need to configure your service ip:
 ```
-docker run -d --net=host -v /var/log/opensds:/var/log/opensds -v /etc/opensds:/etc/opensds -v /etc/ceph:/etc/ceph leonwanghui/opensds-dock:v1alpha
-docker run -it --net=host -v /var/log/opensds:/var/log/opensds leonwanghui/opensds-controller:v1alpha /usr/bin/osdslet --api-endpoint=your_host_ip:50040
+docker run -d --net=host -v /var/log/opensds:/var/log/opensds -v /etc/opensds:/etc/opensds -v /etc/ceph:/etc/ceph leonwanghui/opensds-dock:opa-scheduler
+docker run -it --net=host -v /var/log/opensds:/var/log/opensds -v /etc/opensd:/etc/opensds leonwanghui/opensds-controller:opa-scheduler
 
 curl -X POST "http://your_host_ip:50040/api/v1alpha/profiles" -H "Content-Type: application/json" -d '{"name": "default", "description": "default policy", "extra": {"capacity": 5}}'
 curl -X POST "http://your_host_ip:50040/api/v1alpha/profiles" -H "Content-Type: application/json" -d '{"name": "silver", "description": "silver policy", "extra": {"iops": 300, "bandwidth": 500, "diskType":"SAS", "capacity": 5}}'
@@ -193,10 +193,10 @@ kubectl.sh get po -n opensds-broker (check if opensds broker pod is running)
 
 ### Configure Kubectl context
 ```
-kubectl.sh config set-cluster service-catalog --server=http://127.0.0.1:30080
+kubectl.sh config set-cluster service-catalog --server=https://127.0.0.1:30443 --insecure-skip-tls-verify=true
 kubectl.sh config set-context service-catalog --cluster=service-catalog
 
-kubectl.sh --context=service-catalog get brokers,instances,bindings
+kubectl.sh --context=service-catalog get clusterservicebrokers,serviceinstances,servicebindings
 ```
 
 ## Start to work
@@ -205,7 +205,7 @@ kubectl.sh --context=service-catalog get brokers,instances,bindings
 
 ```
 kubectl.sh --context=service-catalog create -f examples/opensds-broker.yaml
-kubectl.sh --context=service-catalog get brokers,serviceclasses
+kubectl.sh --context=service-catalog get clusterservicebrokers,clusterserviceclasses,clusterserviceplans
 ```
 
 2. Create opensds instance
@@ -214,17 +214,17 @@ kubectl.sh --context=service-catalog get brokers,serviceclasses
 kubectl.sh create ns opensds
 
 kubectl.sh --context=service-catalog create -f examples/opensds-instance.yaml -n opensds
-kubectl.sh --context=service-catalog get instances -n opensds
+kubectl.sh --context=service-catalog get serviceinstances -n opensds
 ```
 
 3. Create opensds instance binding
 
 ```
 kubectl.sh --context=service-catalog create -f examples/opensds-binding.yaml -n opensds
-kubectl.sh --context=service-catalog get bindings -n opensds
+kubectl.sh --context=service-catalog get servicebindings -n opensds
 
 kubectl.sh get secrets -n opensds
-kubectl.sh get secrets opensds-instance-secret -o yaml -n opensds
+kubectl.sh get secrets opensds-secret -o yaml -n opensds
 ```
 
 4. Creat opensds wordpress for testing
@@ -239,7 +239,7 @@ kubectl.sh get po -n opensds
 kubectl.sh get service -n opensds
 ```
 
-After all things done, you can visit your own blog by searching: ```http://service_cluster_ip:8004```!
+After all things done, you can visit your own blog by searching: ```http://service_cluster_ip:8084```!
 
 ## Clean it up
 
@@ -252,19 +252,19 @@ kubectl.sh delete -f examples/Wordpress.yaml -n opensds
 2. Delete opensds instance binding
 
 ```
-kubectl.sh --context=service-catalog delete bindings opensds-binding -n opensds
+kubectl.sh --context=service-catalog delete servicebindings opensds-binding -n opensds
 ```
 
 3. Delete opensds instance
 
 ```
-kubectl.sh --context=service-catalog delete instances opensds-instance -n opensds
+kubectl.sh --context=service-catalog delete serviceinstances opensds-instance -n opensds
 ```
 
 4. Delete opensds broker
 
 ```
-kubectl.sh --context=service-catalog delete brokers opensds-broker
+kubectl.sh --context=service-catalog delete clusterservicebrokers opensds-broker
 ```
 
 5. Uninstall opensds broker pod
