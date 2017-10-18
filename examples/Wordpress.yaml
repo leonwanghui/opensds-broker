@@ -24,7 +24,7 @@ spec:
           monitors:
           - 100.64.128.40:6789
           pool: rbd
-          image: OPENSDS:aaad3621-8455-4506-b20e-d67557485278:54140200-81bd-4c17-825e-4714949f55c1
+          image: OPENSDS::c5b537f0-5a9b-464b-88c2-196e3fbac057
           user: admin
           keyring: /etc/ceph/ceph.client.admin.keyring
           fsType: ext4

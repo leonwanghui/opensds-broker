@@ -5,7 +5,7 @@ metadata:
   namespace: opensds
 spec:
   externalClusterServiceClassName: opensds-service
-  externalClusterServicePlanName: default
+  externalClusterServicePlanName: silver
   parameters:
     credentials:
       name: vol-01
